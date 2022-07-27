@@ -183,6 +183,8 @@ class BigQueryConnectionManager(BaseConnectionManager):
     @classmethod
     def handle_error(cls, error, message):
         error_msg = "\n".join([item["message"] for item in error.errors])
+        if hasattr(error, "query_job"):
+            error_msg += "\n" + cls._bq_job_link(error.query_job)
         raise DatabaseException(error_msg)
 
     def clear_transaction(self):
@@ -477,6 +479,7 @@ class BigQueryConnectionManager(BaseConnectionManager):
             processed_bytes = self.format_bytes(bytes_processed)
             message = f"{code} ({num_rows_formated} rows, {processed_bytes} processed)"
 
+        message += f";\n{self._bq_job_link(query_job)} BQ job"
         response = BigQueryAdapterResponse(  # type: ignore[call-arg]
             _message=message,
             rows_affected=num_rows,
@@ -631,6 +634,10 @@ class BigQueryConnectionManager(BaseConnectionManager):
             _sanitize_label(key): _sanitize_label(str(value))
             for key, value in comment_labels.items()
         }
+
+    @staticmethod
+    def _bq_job_link(query_job) -> str:
+        return f"https://console.cloud.google.com/bigquery?project={query_job.project}&j=bq:{query_job.location}:{query_job.job_id}&page=queryresults"
 
 
 class _ErrorCounter(object):
