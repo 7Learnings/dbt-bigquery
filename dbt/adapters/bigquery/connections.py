@@ -441,7 +441,7 @@ class BigQueryConnectionManager(BaseConnectionManager):
         if query_job.statement_type == "CREATE_VIEW":
             code = "CREATE VIEW"
 
-        elif query_job.statement_type == "CREATE_TABLE_AS_SELECT":
+        elif query_job.statement_type in ["CREATE_TABLE_AS_SELECT", "CREATE_TABLE"]:
             conn = self.get_thread_connection()
             client = conn.handle
             query_table = client.get_table(query_job.destination)
